@@ -42,7 +42,7 @@ void updateConsole()
     std::cout << "  Stack:" <<std::endl;
     std::cout << "      Thread Processador - Memoria Livre (Bytes): " << Global_Status_Last[0] << std::endl;
     std::cout << "      Thread Sensor - Memoria Livre (Bytes): " << Global_Status_Last[1] << std::endl;
-    std::cout << "  Tempo de Execucao:" <<std::endl;
+    std::cout << "  Tempo de Execucao(us):" <<std::endl;
     std::cout << "      Sensor:" <<std::endl;
     std::cout << "          Media: " << Global_Status_Last[2] << std::endl;
     std::cout << "          Maximo: " << Global_Status_Last[3] << std::endl;
@@ -50,7 +50,7 @@ void updateConsole()
     std::cout << "          Media - Integral e Print: " << Global_Status_Last[5] << std::endl;
     std::cout << "          Media - Parte protegida: " << Global_Status_Last[6] << std::endl;
     std::cout << "          Media - Soma das Medias: " << (Global_Status_Last[5] + Global_Status_Last[6]) << std::endl;
-    std::cout << "          Maximo: " << Global_Status_Last[4] << std::endl;
+    std::cout << "          Maximo: " << Global_Status_Last[4] << std::endl <<std::endl;
     
     std::cout << "Calibragem: " << std::endl;
     std::cout << "  Quantidade de Amostras: " << Global_Calibration[0] << std::endl;
@@ -156,10 +156,12 @@ void parseAndWriteCsvLine(const std::string& line, std::ofstream& outFile) {
         }
 
         //Process Data
+        int counter = 0;
         for (size_t i = 1; i < segments.size(); ++i){
             //Check if the string is not empty and its first character is '$', that indicate a title and should be ignored
             if (!segments[i].empty() && segments[i][0] != '$') {
-                Global_Status_Last[i-1] = std::stod(segments[i]);
+                Global_Status_Last[counter] = std::stod(segments[i]);
+                counter ++;
             }
         }        
 
@@ -177,10 +179,12 @@ void parseAndWriteCsvLine(const std::string& line, std::ofstream& outFile) {
         }
 
         //Process Data
-        for (size_t i = 1; i < segments.size(); ++i){
+        int counter = 0;
+        for (size_t i = 2; i < segments.size(); ++i){
             //Check if the string is not empty and its first character is '$', that indicate a title and should be ignored
             if (!segments[i].empty() && segments[i][0] != '$') {
-                Global_Calibration[i-1] = std::stod(segments[i]);
+                Global_Calibration[counter] = std::stod(segments[i]);
+                counter++;
             }
         }        
 
@@ -188,7 +192,13 @@ void parseAndWriteCsvLine(const std::string& line, std::ofstream& outFile) {
         updateConsole();
         return;
     }
+    else if(segments[0] == "$Start"){
+        Global_UpdateCounter = 0;
+    }
     else{
+        for (size_t i = 0; i < segments.size(); ++i) {
+            std::cout << segments[i] << std::endl;
+        }
         return;
     }
 }
@@ -228,7 +238,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Successfully connected to " << portName << std::endl;
 
     // 2. Configure the serial port settings
-    DCB dcbSerialParams = {0};
+    DCB dcbSerialParams;
     dcbSerialParams.DCBlength = sizeof(dcbSerialParams);
 
     if (!GetCommState(hSerial, &dcbSerialParams)) {
@@ -251,7 +261,7 @@ int main(int argc, char* argv[]) {
     }
 
     // 3. Set communication timeouts
-    COMMTIMEOUTS timeouts = {0};
+    COMMTIMEOUTS timeouts;
     timeouts.ReadIntervalTimeout         = 5000; // Max time between bytes
     timeouts.ReadTotalTimeoutConstant    = 5000; // Constant for total read time
     timeouts.ReadTotalTimeoutMultiplier  = 1000; // Multiplier for total read time
