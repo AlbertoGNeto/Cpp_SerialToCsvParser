@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <format>
 
 #define FORMAT_TIMESTAMP_SIZE 21
 #define FORMAT_STATUS_SIZE 15
@@ -129,8 +130,20 @@ void parseAndWriteCsvLine(const std::string& line, std::ofstream& outFile) {
                     ProcessedSegments.push_back(segments[i]);
                 }
             }
+
             //Get the Abs Time
             Global_MicrocontrollerTime = std::stod(ProcessedSegments[0]);
+
+            //Apply the adjustment values. There should be a better way, but it works.
+            ProcessedSegments[1] = std::format("{:.2f}", (std::stod(ProcessedSegments[1])/1000));
+            ProcessedSegments[2] = std::format("{:.3f}", (std::stod(ProcessedSegments[2])/1000));
+            ProcessedSegments[3] = std::format("{:.3f}", (std::stod(ProcessedSegments[3])/1000));
+            ProcessedSegments[4] = std::format("{:.3f}", (std::stod(ProcessedSegments[4])/1000000));
+            ProcessedSegments[5] = std::format("{:.3f}", (std::stod(ProcessedSegments[5])/1000000));
+            ProcessedSegments[6] = std::format("{:.3f}", (std::stod(ProcessedSegments[6])/1000000));
+            ProcessedSegments[7] = std::format("{:.3f}", (std::stod(ProcessedSegments[7])/1000000000));
+            ProcessedSegments[8] = std::format("{:.3f}", (std::stod(ProcessedSegments[8])/1000000000));
+            ProcessedSegments[9] = std::format("{:.3f}", (std::stod(ProcessedSegments[9])/1000000000));
         }
 
         Global_TimeStampCounter++;
@@ -194,6 +207,11 @@ void parseAndWriteCsvLine(const std::string& line, std::ofstream& outFile) {
     }
     else if(segments[0] == "$Start"){
         Global_UpdateCounter = 0;
+        Global_MicrocontrollerTime = 0;
+        Global_TimeStampCounter = 0;
+        Global_TimestampFormatingFail = 0;
+        Global_StatusFormatingFail = 0;
+        updateConsole();
     }
     else{
         for (size_t i = 0; i < segments.size(); ++i) {
